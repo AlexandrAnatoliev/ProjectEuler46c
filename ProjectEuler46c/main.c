@@ -1,102 +1,216 @@
-// euler46c - Другая проблема Гольдбаха
+п»ї// euler46c - Р”СЂСѓРіР°СЏ РїСЂРѕР±Р»РµРјР° Р“РѕР»СЊРґР±Р°С…Р°
 
-// Кристиан Гольдбах показал, что любое нечетное составное число можно записать в виде суммы простого числа 
-// и удвоенного квадрата.
+// РљСЂРёСЃС‚РёР°РЅ Р“РѕР»СЊРґР±Р°С… РїРѕРєР°Р·Р°Р», С‡С‚Рѕ Р»СЋР±РѕРµ РЅРµС‡РµС‚РЅРѕРµ СЃРѕСЃС‚Р°РІРЅРѕРµ С‡РёСЃР»Рѕ РјРѕР¶РЅРѕ Р·Р°РїРёСЃР°С‚СЊ РІ РІРёРґРµ СЃСѓРјРјС‹ РїСЂРѕСЃС‚РѕРіРѕ С‡РёСЃР»Р° 
+// Рё СѓРґРІРѕРµРЅРЅРѕРіРѕ РєРІР°РґСЂР°С‚Р°.
 
-// 9 = 7 + 2?1^2
-// 15 = 7 + 2?2^2
-// 21 = 3 + 2?3^2
-// 25 = 7 + 2?3^2
-// 27 = 19 + 2?2^2
-// 33 = 31 + 2?1^2
+// 9 = 7 + 2Г—1^2
+// 15 = 7 + 2Г—2^2
+// 21 = 3 + 2Г—3^2
+// 25 = 7 + 2Г—3^2
+// 27 = 19 + 2Г—2^2
+// 33 = 31 + 2Г—1^2
 
-// Оказалось, что данная гипотеза неверна.
+// РћРєР°Р·Р°Р»РѕСЃСЊ, С‡С‚Рѕ РґР°РЅРЅР°СЏ РіРёРїРѕС‚РµР·Р° РЅРµРІРµСЂРЅР°.// 5777
 
-// Каково наименьшее нечетное составное число, которое нельзя записать в виде суммы простого числа и удвоенного квадрата?
+// РљР°РєРѕРІРѕ РЅР°РёРјРµРЅСЊС€РµРµ РЅРµС‡РµС‚РЅРѕРµ СЃРѕСЃС‚Р°РІРЅРѕРµ С‡РёСЃР»Рѕ, РєРѕС‚РѕСЂРѕРµ РЅРµР»СЊР·СЏ Р·Р°РїРёСЃР°С‚СЊ РІ РІРёРґРµ СЃСѓРјРјС‹ РїСЂРѕСЃС‚РѕРіРѕ С‡РёСЃР»Р° Рё СѓРґРІРѕРµРЅРЅРѕРіРѕ РєРІР°РґСЂР°С‚Р°?
 
 #include <stdio.h>
 #include <stdbool.h>
-#include <math.h>								        // для работы функции sqrt()
+#include <math.h>								        // РґР»СЏ СЂР°Р±РѕС‚С‹ С„СѓРЅРєС†РёРё sqrt()
 #include <time.h>	 // for clock_t, clock(), CLOCKS_PER_SEC
-#include <locale.h>	 // русский язык в printf()
+#include <locale.h>	 // СЂСѓСЃСЃРєРёР№ СЏР·С‹Рє РІ printf()
+#include <stdlib.h>		// РґР»СЏ malloc()
 
-bool is_simple(char prime_ar[], int num)
-// функция принимает число и возвращает true - если число простое
-// параметры:	prime_ar[]  - массив с ранее вычисленными простыми числами
-//              num         - проверяемое число    
-// return:      true        - если число простое
+enum bit_nums               // С‡РёСЃР»Р° РІ РІРёРґРµ Р±РёС‚РѕРІС‹С… С„Р»Р°РіРѕРІ
 {
-    int div_max = sqrt(num) + 1;                        // выносим вычисление квадратного корня из цикла for
+	one = 0x1,              // 00000001
+	three = 0x1 << 1,		// 00000010
+	five = 0x1 << 2,		// 00000100
+	seven = 0x1 << 3,		// 00001000
+	nine = 0x1 << 4			// 00010000
+} bit_t;
 
-    for (int div = 2; div < div_max; div++)             // чтобы он не вычислялся каждую итерацию цикла
-    {
-        if (prime_ar[div] && !(num % div))              // пропускаем составные делители и срабатываем при num % i == 0
-            return false;
-    }
-    return true;
-}
-
-bool is_goldbach(char prime_ar[], int num)
-// функция принимает число и возвращает true - если это число Гольдбаха
-// параметры:	prime_ar[]  - массив с ранее вычисленными простыми числами
-//              num         - проверяемое число    
-// return:      true        - если это число Гольдбаха
+enum check_sign				// РїСЂР°РјРµС‚СЂ РґР»СЏ С„СѓРЅРєС†РёРё check()
 {
-    bool answ_fl = false;
-    int sq_num_max = (sqrt(num / 2 + 1) + 1);           // выносим вычисление квадратного корня из цикла for
-    for (int sq_num = 1; sq_num < sq_num_max; sq_num++) // чтобы он не вычислялся каждую итерацию цикла
-        if (prime_ar[num - (2 * sq_num * sq_num)])
-        {
-            answ_fl = true;
-            break;
-        }
-    return answ_fl;
-}
+	more,					// Р±РѕР»СЊС€Рµ
+	less					// РјРµРЅСЊС€Рµ
+}sign_t;
 
-int add_primes(char prime_ar[], int len, int value)
-// функция проверяет статус чисел "простое/составное" и записывает в массив
-// параметры:	prime_ar[]  - массив с ранее вычисленными простыми числами
-//              len         - количество чисел в массиве для которых уже определен сатус: простое/составное
-//              value       - количество чисел, статус которых нуэжно дополнительно определить    
+typedef struct arr			// TODO РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊ РІ list
 {
-    for (int i = len + 1; i < (len + 1 + value); i++)    // еще ноль в массиве
-        prime_ar[i] = is_simple(prime_ar, i);
-    return 0;
-}
+	int len;                // РґР»РёРЅР° РјР°СЃСЃРёРІР°
+	char* arr;              // СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РјР°СЃСЃРёРІ
+}arr_t;
+
+arr_t arr_СЃalloc(arr_t arr, int len);
+bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit);
+bool push_num(arr_t* prime_arr, int num);
+bool is_prime(arr_t prime_arr, int num);
+int get_next_prime(arr_t prime_arr, int num);
+bool is_goldbach(arr_t prime_arr, int two_sqrt_arr[], int num);
+
 
 int main(void)
 {
-    setlocale(LC_ALL, "Rus"); // русский язык в printf()
+	setlocale(LC_ALL, "Rus"); // СЂСѓСЃСЃРєРёР№ СЏР·С‹Рє РІ printf()
 
-    double time_spent = 0.0; // для хранения времени выполнения кода
-    clock_t begin = clock(); // СТАРТ таймера
-    
-    int answ = 9;                                       // первое составное нечетное число
-    bool goldbach_fl = true;
+	int max_num = 10000;
 
-    static char prime_arr[10000] = { 0 };		        // массив[простое число] = 1 - static писать обязательно!
+	printf("Р’РІРµРґРёС‚Рµ РґРѕ РєР°РєРѕРіРѕ С‡РёСЃР»Р° Р±СѓРґРµС‚ РѕСЃСѓС‰РµСЃС‚РІР»СЏС‚СЊСЃСЏ РїРѕРёСЃРє: ");
+	scanf_s("%d", &max_num);
+	
+	double time_spent = 0.0; // РґР»СЏ С…СЂР°РЅРµРЅРёСЏ РІСЂРµРјРµРЅРё РІС‹РїРѕР»РЅРµРЅРёСЏ РєРѕРґР°
+	clock_t begin = clock(); // РЎРўРђР Рў С‚Р°Р№РјРµСЂР°
 
-    prime_arr[1] = 1;                                   // определяем статус первых 10 чисел в массиве
-    prime_arr[2] = 1;
-    add_primes(prime_arr, 2, 8);
+	arr_t prime_list = { .len = 0 };
+	
+	prime_list = arr_СЃalloc(prime_list, max_num / 10); // TODO СѓР±СЂР°С‚СЊ (arr) РёР· С„СѓРЅРєС†РёРё, Р·Р°РјРµРЅРёС‚СЊ РІСЂРµРјРµРЅРЅС‹РјРё СЃС‚СЂСѓРєС‚СѓСЂР°РјРё (NULL, 0)
+	// РІС‹С‡РёСЃР»СЏС‚СЊ РґР»РёРЅСѓ РјР°СЃСЃРёРІР° РєР°Рє max_num / 10
 
-    while (goldbach_fl)                                  // пока не найден ответ  
-    {
-        add_primes(prime_arr, answ, 100);               // определяем статус еще 100 чисел
-        int finish = answ + 100;
-        while (goldbach_fl && answ < finish)            // проверяем числа в добавленном диапазоне (+100)
-        {
-            answ += 2;
-            if (!prime_arr[answ])                        // проверяем только если не является простым числом
-                goldbach_fl = is_goldbach(prime_arr, answ);
-        }
-    }
+	// TODO РІС‹РґРµР»РёС‚СЊ РїР°РјСЏС‚СЊ С‡РµСЂРµР· СЃС‚СЂСѓРєС‚СѓСЂСѓ
+	int two_sqrt[500] = {0}; // РІС‹С‡РёСЃР»СЏС‚СЊ РґР»РёРЅСѓ РјР°СЃСЃРёРІР° РєР°Рє sqrt(max_num) / 2
 
-    //printf("%d\n", answ);					            // 5777
-    clock_t end = clock();								  // СТОП таймера
-    time_spent += (double)(end - begin) / CLOCKS_PER_SEC; // время работы в секундах
+	int prime = 2;
+	int answ = 9;                                       // РїРµСЂРІРѕРµ СЃРѕСЃС‚Р°РІРЅРѕРµ РЅРµС‡РµС‚РЅРѕРµ С‡РёСЃР»Рѕ
+	int indx = 0;
+	int num = 0;
 
-    printf("Ответ = %d время = %f\n", answ, time_spent); // выводим результат и время работы программы
+	while (prime < max_num)
+	{
+		while (prime < answ)
+		{
+			prime = get_next_prime(prime_list, prime); // РѕРїСЂРµРґРµР»СЏРµРј СЃР»РµРґСѓСЋС‰РµРµ РїСЂРѕСЃС‚РѕРµ С‡РёСЃР»Рѕ TODO РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РІС‹С…РѕРґ Р·Р° РїСЂРµРґРµР»С‹ РјР°СЃСЃРёРІР°
+			push_num(&prime_list, prime); // Рё Р·Р°РЅРѕСЃРёРј С‡РёСЃР»Рѕ РІ РјР°СЃСЃРёРІ
+		}
 
-    return 0;
+		while ((two_sqrt[num] = 2 * num * num) < answ)
+			num++;
+
+		if (is_prime(prime_list, answ) == false && is_goldbach(prime_list, two_sqrt, answ) == false)
+			break;
+
+		answ += 2;
+	}
+
+	free(prime_list.arr);										// РѕСЃРІРѕР±РѕР¶РґР°РµРј РїР°РјСЏС‚СЊ
+
+	clock_t end = clock();								  // РЎРўРћРџ С‚Р°Р№РјРµСЂР°
+	time_spent += (double)(end - begin) / CLOCKS_PER_SEC; // РІСЂРµРјСЏ СЂР°Р±РѕС‚С‹ РІ СЃРµРєСѓРЅРґР°С…
+
+	printf("РћС‚РІРµС‚ = %d РІСЂРµРјСЏ = %f\n", answ, time_spent); // РІС‹РІРѕРґРёРј СЂРµР·СѓР»СЊС‚Р°С‚ Рё РІСЂРµРјСЏ СЂР°Р±РѕС‚С‹ РїСЂРѕРіСЂР°РјРјС‹
+
+	return 0;
+}
+
+arr_t arr_СЃalloc(arr_t arr, int len)
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РІС‹РґРµР»РµРЅРёСЏ РїР°РјСЏС‚Рё СЃС‚СЂСѓРєС‚СѓСЂРµ
+// РќРµ Р·Р°Р±С‹РІР°С‚СЊ free()!!!
+{
+	arr_t ptr;
+	if ((ptr.arr = calloc(1, len)) == NULL)					// РЅРµ РІС‹РґРµР»РµРЅР° РїР°РјСЏС‚СЊ
+		return arr;
+	ptr.len = len;
+
+	return ptr;										// РїР°РјСЏС‚СЊ СѓСЃРїРµС€РЅРѕ РІС‹РґРµР»РµРЅР°
+}
+
+bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit)
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїСЂРѕРІРµСЂРєРё РЅРµРІС‹С…РѕРґР° РїР°СЂР°РјРµС‚СЂРѕРІ Р·Р° РїСЂРµРґРµР»С‹
+{
+	if (sign == more && param >= limit) // РѕС‚СЂР°Р±Р°С‚С‹РІР°РµРј РїСЂРµРІС‹С€РµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРј РїСЂРµРґРµР»Р°
+	{
+		printf("%s: %s = %d РїСЂРµРІС‹С€Р°РµС‚ Р·РЅР°С‡РµРЅРёРµ %s = %d\n", name_func, name_param, param, name_limit, limit);
+		return true;
+	}
+
+	else if (sign == less && param <= limit) // РѕС‚СЂР°Р±Р°С‚С‹РІР°РµРј РЅРµРґРѕСЃС‚РёР¶РµРЅРёРµ РїР°СЂР°РјРµС‚СЂРѕРј РїСЂРµРґРµР»Р°
+	{
+		printf("%s: %s = %d РјРµРЅСЊС€Рµ Р·РЅР°С‡РµРЅРёСЏ %s = %d\n", name_func, name_param, param, name_limit, limit);
+		return true;
+	}
+	return false;
+}
+
+bool push_num(arr_t* prime_arr, int num)
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РІРЅРµСЃРµРЅРёСЏ С‡РёСЃР»Р° РІ РјР°СЃСЃРёРІ
+{
+	if (check("push_num()", "num / 10", num / 10, more, "prime_arr.len", prime_arr->len))
+		return false;
+
+	char past_num[10] = { 0, one, 0, three, 0, five, 0, seven, 0, nine };
+	prime_arr->arr[num / 10] |= past_num[num % 10]; // 123 => arr[12] = 00000010
+	return true;
+}
+
+bool is_prime(arr_t prime_arr, int num)
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РѕРїСЂРµРґРµР»РµРЅРёСЏ РїСЂРѕСЃС‚РѕРіРѕ С‡РёСЃР»Р° - РїСЂРѕРІРµСЂРєРё РµРіРѕ РЅР°Р»РёС‡РёСЏ РІ РјР°СЃСЃРёРІРµ РїСЂРѕСЃС‚С‹С… С‡РёСЃРµР»
+{
+	if (check("is_prime()", "num / 10", num / 10, more, "prime_arr.len", prime_arr.len))
+		return false;
+
+	char prime[] = { 0, 0, 1, 1, 0, 1, 0, 1, 0, 1 };
+	if (num < 10)
+		return prime[num];
+
+	char mask[10] = { 0, one, 0, three, 0, five, 0, seven, 0, nine };
+
+	return prime_arr.arr[num / 10] & mask[num % 10];
+}
+
+int get_next_prime(arr_t prime_arr, int num)
+// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ СЃР»РµРґСѓСЋС‰РµРіРѕ РїСЂРѕСЃС‚РѕРіРѕ С‡РёСЃР»Р° РїРѕСЃР»Рµ num
+{
+	num += (num % 2) ? 2 : 1;	// РїРµСЂРµР±РѕСЂ РЅРµС‡РµС‚РЅС‹С… С‡РёСЃРµР» += 2
+	bool prime_fl = false;
+
+	while (prime_fl == false)	// РїРѕРєР° РЅРµ РЅР°С€Р»Рё РїСЂРѕСЃС‚РѕРµ С‡РёСЃР»Рѕ
+	{
+		if (check("get_next_prime()", "num / 10", num / 10, more, "prime_arr.len", prime_arr.len))
+			return false;
+
+		int max_div = sqrt(num) + 1;
+		int div;
+		for (div = 2; div < max_div; div++)
+		{
+			if (is_prime(prime_arr, div) == false)// РїСЂРѕРІРµСЂСЏРµРј С‚РѕР»СЊРєРѕ РїСЂРѕСЃС‚С‹Рµ РґРµР»РёС‚РµР»Рё
+				continue;
+
+			if (num % div == 0)						// С‡РёСЃР»Рѕ СЃРѕСЃС‚Р°РІРЅРѕРµ
+			{
+				prime_fl = false;
+				break;
+			}
+		}
+
+		if (div == max_div) // РїРµСЂРµР±СЂР°Р»Рё РІСЃРµ РґРµР»РёС‚РµР»Рё РґРѕ РєРѕРЅС†Р°
+			prime_fl = true;
+		else
+			num += 2;
+	}
+	return num;
+}
+
+bool is_goldbach(arr_t prime_arr, int two_sqrt_arr[], int num)
+// Р¤СѓРЅРєС†РёСЏ РїСЂРѕРІРµСЂСЏРµС‚ СѓРґРѕРІР»РµС‚РІРѕСЂСЏРµС‚ Р»Рё С‡РёСЃР»Рѕ СѓСЃР»РѕРІРёСЏ Р“РѕР»СЊРґР±Р°С…Р° 
+{
+	if (num % 2 == 0)
+	{
+		printf("is_goldbach(): С‡РёСЃР»Рѕ %d - С‡РµС‚РЅРѕРµ\n", num);
+		return true;
+	}
+
+	if (is_prime(prime_arr, num))
+	{
+		printf("is_goldbach(): С‡РёСЃР»Рѕ %d - РїСЂРѕСЃС‚РѕРµ\n", num);
+		return true;
+	}
+
+	int number = 0;
+	while (two_sqrt_arr[number] < num)
+	{
+		if (is_prime(prime_arr, num - two_sqrt_arr[number]))
+			return true;
+		number++;
+	}
+	return false;
 }
