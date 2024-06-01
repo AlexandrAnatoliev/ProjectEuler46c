@@ -36,87 +36,20 @@ enum check_sign				// праметр для функции check()
 	less					// меньше
 }sign_t;
 
-typedef struct arr			// TODO переименовать в list
+typedef struct list
 {
 	int len;                // длина массива
 	char* arr;              // указатель на массив
-}arr_t;
+}list_t;
 
-arr_t arr_сalloc(int len);
-bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit);
-bool push_num(arr_t* prime_arr, int num);
-bool is_prime(arr_t prime_arr, int num);
-int get_next_prime(arr_t prime_arr, int num);
-bool is_goldbach(arr_t prime_arr, int two_sqrt_arr[], int num);
+list_t list_сalloc(int len);
+bool push_num(list_t* prime_arr, int num);
+bool is_prime(list_t prime_arr, int num);
+int get_next_prime(list_t prime_arr, int num);
+bool is_goldbach(list_t prime_arr, int two_sqrt_arr[], int num);
 
-
-int main(void)
-{
-	setlocale(LC_ALL, "Rus"); // русский язык в printf()
-
-	int max_num = 10000;
-
-	printf("Введите до какого числа будет осуществляться поиск: ");
-	scanf_s("%d", &max_num);
-
-	double time_spent = 0.0; // для хранения времени выполнения кода
-	clock_t begin = clock(); // СТАРТ таймера
-
-	int* two_sqrt = calloc(sizeof(int), (int)sqrt(max_num / 2) + 2);
-
-	arr_t prime_list = { .len = 0 };
-	prime_list = arr_сalloc(max_num / 10);
-	
-	int prime = 2;
-	int answ = 9;                                       // первое составное нечетное число
-	int indx = 0;
-	int num = 0;
-
-	while (prime && prime < max_num)// дойдя до конца массива prime == false т.е. 0
-	{
-		while (prime && prime < answ)
-		{
-			prime = get_next_prime(prime_list, prime); // определяем следующее простое число
-			push_num(&prime_list, prime); // и заносим число в массив
-		}
-
-		while ((two_sqrt[num] = 2 * num * num) < answ)
-			num++;
-
-		if (is_prime(prime_list, answ) == false && is_goldbach(prime_list, two_sqrt, answ) == false)
-			break;
-
-		answ += 2;
-	}
-
-	free(prime_list.arr);										// освобождаем память
-	free(two_sqrt);
-
-	clock_t end = clock();								  // СТОП таймера
-	time_spent += (double)(end - begin) / CLOCKS_PER_SEC; // время работы в секундах
-
-	if (answ > max_num)
-		printf("В диапазоне чисел до %d ответ не найден", max_num);
-	else
-		printf("Ответ = %d время = %f\n", answ, time_spent); // выводим результат и время работы программы
-
-	return 0;
-}
-
-arr_t arr_сalloc(int len)
-// Функция для выделения памяти структуре
-// Не забывать free()!!!
-{
-	arr_t ptr = {.arr = NULL, .len = 0};
-	if ((ptr.arr = calloc(1, len)) == NULL)					// не выделена память
-		return ptr;
-	ptr.len = len;
-
-	return ptr;										// память успешно выделена
-}
-
-bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit)
-// Функция для проверки невыхода параметров за пределы
+inline static bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit)
+// Встраиваемая (!) функция для проверки невыхода параметров за пределы
 {
 	if (sign == more && param >= limit) // отрабатываем превышение параметром предела
 	{
@@ -132,33 +65,98 @@ bool check(char* name_func, char* name_param, int param, int sign, char* name_li
 	return false;
 }
 
-bool push_num(arr_t* prime_arr, int num)
+int main(void)
+{
+	setlocale(LC_ALL, "Rus"); // русский язык в printf()
+
+	int max_num;
+
+	printf("Введите максимальное число, до которого будет осуществляться поиск: ");
+	scanf_s("%d", &max_num);
+
+	double time_spent = 0.0; // для хранения времени выполнения кода
+	clock_t begin = clock(); // СТАРТ таймера
+
+	int* two_sqrt_arr = calloc(sizeof(int), (int)sqrt(max_num / 2) + 2);
+
+	list_t prime_list = { .len = 0 };
+	prime_list = list_сalloc(max_num / 10);
+	
+	int prime = 2;
+	int answ = 9;                                       // первое составное нечетное число
+	int indx = 0;
+	int num = 0;
+
+	while (prime && prime < max_num)// дойдя до конца массива prime == false т.е. 0
+	{
+		while (prime && prime < answ)
+		{
+			prime = get_next_prime(prime_list, prime); // определяем следующее простое число
+			push_num(&prime_list, prime); // и заносим число в массив
+		}
+
+		while ((two_sqrt_arr[num] = 2 * num * num) < answ)
+			num++;
+
+		if (is_prime(prime_list, answ) == false && is_goldbach(prime_list, two_sqrt_arr, answ) == false)
+			break;
+
+		answ += 2;
+	}
+
+	free(prime_list.arr);										// освобождаем память
+	free(two_sqrt_arr);
+
+	clock_t end = clock();								  // СТОП таймера
+	time_spent += (double)(end - begin) / CLOCKS_PER_SEC; // время работы в секундах
+
+	if (answ > max_num)
+		printf("В диапазоне чисел до %d ответ не найден", max_num);
+	else
+		printf("Ответ = %d время = %f\n", answ, time_spent); // выводим результат и время работы программы
+
+	return 0;
+}
+
+list_t list_сalloc(int len)
+// Функция для выделения памяти структуре
+// Не забывать free()!!!
+{
+	list_t ptr = {.arr = NULL, .len = 0};
+	if ((ptr.arr = calloc(1, len)) == NULL)					// не выделена память
+		return ptr;
+	ptr.len = len;
+
+	return ptr;										// память успешно выделена
+}
+
+bool push_num(list_t* prime_list, int num)
 // Функция для внесения числа в массив
 {
-	if (check("push_num()", "num / 10", num / 10, more, "prime_arr.len", prime_arr->len))
+	if (check("push_num()", "num / 10", num / 10, more, "prime_list.len", prime_list->len))
 		return false;
 
 	char past_num[10] = { 0, one, 0, three, 0, five, 0, seven, 0, nine };
-	prime_arr->arr[num / 10] |= past_num[num % 10]; // 123 => arr[12] = 00000010
+	prime_list->arr[num / 10] |= past_num[num % 10]; // 123 => arr[12] = 00000010
 	return true;
 }
 
-bool is_prime(arr_t prime_arr, int num)
+bool is_prime(list_t prime_list, int num)
 // Функция для определения простого числа - проверки его наличия в массиве простых чисел
 {
-	if (check("is_prime()", "num / 10", num / 10, more, "prime_arr.len", prime_arr.len))
+	if (check("is_prime()", "num / 10", num / 10, more, "prime_list.len", prime_list.len))
 		return false;
 
-	char prime[] = { 0, 0, 1, 1, 0, 1, 0, 1, 0, 1 };
+	char prime_flag[] = { 0, 0, 1, 1, 0, 1, 0, 1, 0, 1 };
 	if (num < 10)
-		return prime[num];
+		return prime_flag[num];
 
 	char mask[10] = { 0, one, 0, three, 0, five, 0, seven, 0, nine };
 
-	return prime_arr.arr[num / 10] & mask[num % 10];
+	return prime_list.arr[num / 10] & mask[num % 10];
 }
 
-int get_next_prime(arr_t prime_arr, int num)
+int get_next_prime(list_t prime_list, int num)
 // Функция для получения следующего простого числа после num
 {
 	num += (num % 2) ? 2 : 1;	// перебор нечетных чисел += 2
@@ -166,14 +164,14 @@ int get_next_prime(arr_t prime_arr, int num)
 
 	while (prime_fl == false)	// пока не нашли простое число
 	{
-		if (check("get_next_prime()", "num / 10", num / 10, more, "prime_arr.len", prime_arr.len))
+		if (check("get_next_prime()", "num / 10", num / 10, more, "prime_list.len", prime_list.len))
 			return false;
 
 		int max_div = sqrt(num) + 1;
 		int div;
 		for (div = 2; div < max_div; div++)
 		{
-			if (is_prime(prime_arr, div) == false)// проверяем только простые делители
+			if (is_prime(prime_list, div) == false)// проверяем только простые делители
 				continue;
 
 			if (num % div == 0)						// число составное
@@ -191,7 +189,7 @@ int get_next_prime(arr_t prime_arr, int num)
 	return num;
 }
 
-bool is_goldbach(arr_t prime_arr, int two_sqrt_arr[], int num)
+bool is_goldbach(list_t prime_list, int two_sqrt_arr[], int num)
 // Функция проверяет удовлетворяет ли число условия Гольдбаха 
 {
 	if (num % 2 == 0)
@@ -200,7 +198,7 @@ bool is_goldbach(arr_t prime_arr, int two_sqrt_arr[], int num)
 		return true;
 	}
 
-	if (is_prime(prime_arr, num))
+	if (is_prime(prime_list, num))
 	{
 		printf("is_goldbach(): число %d - простое\n", num);
 		return true;
@@ -209,7 +207,7 @@ bool is_goldbach(arr_t prime_arr, int two_sqrt_arr[], int num)
 	int number = 0;
 	while (two_sqrt_arr[number] < num)
 	{
-		if (is_prime(prime_arr, num - two_sqrt_arr[number]))
+		if (is_prime(prime_list, num - two_sqrt_arr[number]))
 			return true;
 		number++;
 	}
