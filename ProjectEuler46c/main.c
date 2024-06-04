@@ -14,7 +14,13 @@
 
 // Каково наименьшее нечетное составное число, которое нельзя записать в виде суммы простого числа и удвоенного квадрата?
 
-#include "header.h"
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>			// для работы функции sqrt()
+#include <time.h>			// for clock_t, clock(), CLOCKS_PER_SEC
+#include <locale.h>			// русский язык в printf()
+#include <stdlib.h>			// для calloc()
+#include "header.h"			// заголовочный файл со структурами и объявлениями функций
 
 int main(void)
 {
@@ -27,44 +33,49 @@ int main(void)
 	double time_spent = 0.0;								// для хранения времени выполнения кода
 	clock_t begin = clock();								// СТАРТ таймера
 
-	int* two_sqrt_arr = calloc(sizeof(int), (int)sqrt(max_num / 2) + 2); 
+	int* two_sqrt_arr = calloc(sizeof(int), (int)sqrt(max_num / 2) + 2);
 	// массив удвоенных квадратов натуральных чисел arr[5] = 2 * 5^2
 
 	list_t prime_hash;
 	prime_hash = list_сalloc(max_num / 10);					// хеш-массив простых чисел
-	
+
 	int prime = 2;											// первое простое число
 	int answ = 9;											// первое составное нечетное число
 	int indx = 0;
 	int num = 0;
+	bool answ_fl = false;
 
 	while (prime && prime < max_num)						// дойдя до конца массива prime = 0
 	{
 		while (prime && prime < answ)
 		{
-			prime = get_next_prime(prime_hash, prime);		// определяем следующее простое число
+			prime = get_next_prime(&prime_hash, prime);		// определяем следующее простое число
 			push_num(&prime_hash, prime);					// и заносим число в массив
 		}
 
 		while ((two_sqrt_arr[num] = 2 * num * num) < answ)	// заполняем массив удвоенных квадратов
 			num++;
 
-		if (is_prime(prime_hash, answ) == false && is_goldbach(prime_hash, two_sqrt_arr, answ) == false)
-			break;											// найден ответ
+		if (is_prime(&prime_hash, answ) == false && is_goldbach(&prime_hash, two_sqrt_arr, answ) == false)
+		{
+			answ_fl = true;									// найден ответ
+			break;
+		}
+
 
 		answ += 2;											// перебираем нечетные числа
 	}
 
 	free(prime_hash.arr);									// освобождаем память
 	free(two_sqrt_arr);
-		
+
 	clock_t end = clock();									// СТОП таймера
 	time_spent += (double)(end - begin) / CLOCKS_PER_SEC;	// время работы в секундах
 
-	if (answ > max_num)
-		printf("В диапазоне чисел до %d ответ не найден", max_num);
+	if (answ_fl)
+		printf("\nОтвет = %d время = %f\n", answ, time_spent); // выводим результат и время работы программы
 	else
-		printf("Ответ = %d время = %f\n", answ, time_spent); // выводим результат и время работы программы
+		printf("\nВ диапазоне чисел до %d ответ не найден\n", max_num);
 
 	return 0;
 }

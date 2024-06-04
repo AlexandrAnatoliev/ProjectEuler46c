@@ -1,7 +1,14 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <math.h>			// для работы функции sqrt()
+#include <time.h>			// for clock_t, clock(), CLOCKS_PER_SEC
+#include <locale.h>			// русский язык в printf()
+#include <stdlib.h>			// для calloc()
 #include "header.h"
 
-inline static bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit)
-// Встраиваемая (!) функция для проверки невыхода параметров за пределы
+inline const bool check(char* name_func, char* name_param, int param, int sign, char* name_limit, int limit)
+// Встраиваемая (inline) функция для проверки невыхода параметров за пределы
+// функция скрыта с помощью const т.к. функция является частью реализации, а не интерфейса
 // Параметры:	name_func	- название функции
 //				name_param	- навание параметра
 //				param		- значение параметра
@@ -41,28 +48,28 @@ list_t list_сalloc(int len)
 	return list;								// память успешно выделена
 }
 
-bool push_num(list_t* prime_list, int num)
+bool push_num(list_t* prime_hash, int num)
 // Функция для внесения числа в хеш-массив структуры
-// Параметры:	prime_list	- структура
+// Параметры:	prime_hash	- структура
 //				num			- вносимое число
 // return:		true		- число успешно внесено
 {
-	if (check("push_num()", "num / 10", num / 10, more, "prime_list.len", prime_list->len))
+	if (check("push_num()", "num / 10", num / 10, more, "prime_hash.len", prime_hash->len))
 		return false;
 
 	char mask_num[] = { 0, one, 0, three, 0, five, 0, seven, 0, nine };
-	prime_list->arr[num / 10] |= mask_num[num % 10];			// 123 => arr[12] = 00000010
+	prime_hash->arr[num / 10] |= mask_num[num % 10];			// 123 => arr[12] = 00000010
 
 	return true;
 }
 
-bool is_prime(list_t prime_list, int num)
+bool is_prime(const list_t *prime_hash, int num)
 // Функция для определения простого числа (проверки его наличия в хеш-массиве простых чисел)
-// Параметры:	prime_list	- структура
+// Параметры:	prime_hash	- структура
 //				num			- проверяемое число
 // return:		true		- число простое
 {
-	if (check("is_prime()", "num / 10", num / 10, more, "prime_list.len", prime_list.len))
+	if (check("is_prime()", "num / 10", num / 10, more, "prime_hash.len", prime_hash->len))
 		return false;
 
 	char prime_flag[] = { 0, 0, 1, 1, 0, 1, 0, 1, 0, 1 };
@@ -71,12 +78,12 @@ bool is_prime(list_t prime_list, int num)
 
 	char mask_num[] = { 0, one, 0, three, 0, five, 0, seven, 0, nine };
 
-	return prime_list.arr[num / 10] & mask_num[num % 10];
+	return prime_hash->arr[num / 10] & mask_num[num % 10];
 }
 
-int get_next_prime(list_t prime_list, int num)
+int get_next_prime(const list_t *prime_hash, int num)
 // Функция для получения следующего простого числа после num
-// Параметры:	prime_list	- структура
+// Параметры:	prime_hash	- структура
 //				num			- проверяемое число
 // return:		0			- выход за пределы массива
 {
@@ -85,7 +92,7 @@ int get_next_prime(list_t prime_list, int num)
 
 	while (prime_fl == false)						// пока не нашли простое число
 	{
-		if (check("get_next_prime()", "num / 10", num / 10, more, "prime_list.len", prime_list.len))
+		if (check("get_next_prime()", "num / 10", num / 10, more, "prime_hash.len", prime_hash->len))
 			return false;
 
 		int max_div = sqrt(num) + 1;
@@ -93,7 +100,7 @@ int get_next_prime(list_t prime_list, int num)
 
 		for (div = 2; div < max_div; div++)			// проверяем только простые делители
 		{
-			if (is_prime(prime_list, div) == false)
+			if (is_prime(prime_hash, div) == false)
 				continue;
 
 			if (num % div == 0)						// число составное
@@ -112,9 +119,9 @@ int get_next_prime(list_t prime_list, int num)
 	return num;
 }
 
-bool is_goldbach(list_t prime_list, int two_sqrt_arr[], int num)
+bool is_goldbach(const list_t *prime_hash, int two_sqrt_arr[], int num)
 // Функция проверяет удовлетворяет ли число условия Гольдбаха 
-// Параметры:	prime_list		- структура
+// Параметры:	prime_hash		- структура
 //				two_sqrt_arr	- массив двойных квадратов натуральных чисел
 //				num				- проверяемое число
 // return:		false			- число не удовлетворяет условию Гольдбаха
@@ -125,7 +132,7 @@ bool is_goldbach(list_t prime_list, int two_sqrt_arr[], int num)
 		return true;
 	}
 
-	if (is_prime(prime_list, num))
+	if (is_prime(prime_hash, num))
 	{
 		printf("is_goldbach(): число %d - простое\n", num);
 		return true;
@@ -134,7 +141,7 @@ bool is_goldbach(list_t prime_list, int two_sqrt_arr[], int num)
 	int number = 0;
 	while (two_sqrt_arr[number] < num)
 	{
-		if (is_prime(prime_list, num - two_sqrt_arr[number]))
+		if (is_prime(prime_hash, num - two_sqrt_arr[number]))
 			return true;
 		number++;
 	}
